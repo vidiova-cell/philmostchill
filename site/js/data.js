@@ -48,7 +48,7 @@ window.PMC = {
       color: '#ff9fc8',
       description: 'Gesichter, Gesten, Momente. Meistens ungestellt.',
       coords: 'RA 05h 55m · DEK +07°',
-      pos: { x: 0.6, y: 0.83 },
+      pos: { x: 0.62, y: 0.87 },
       posNarrow: { x: 0.22, y: 0.72 },
     },
     {
