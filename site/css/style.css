@@ -578,6 +578,7 @@ img { max-width: 100%; display: block; }
 .lb-next { right: var(--gutter); top: 50%; margin-top: -24px; }
 
 @media (max-width: 700px) {
+  .g-hero { padding: 92px 0 32px; } /* Handy: weniger Leerraum unter der Kopfzeile */
   body { font-size: 17px; }
   .lb-stage { padding: 60px 8px 96px; }
   .lb-prev, .lb-next { top: auto; bottom: max(70px, calc(env(safe-area-inset-bottom) + 60px)); margin: 0; width: 42px; height: 42px; }
