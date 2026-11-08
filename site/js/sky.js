@@ -99,7 +99,7 @@
       unit = scale * 270;
 
       const nodes = [], edges = [];
-      const STEP = 55;
+      const STEP = 42;
       let order = 0;
       Object.values(L.letters).forEach((poly) => {
         const ns = poly.map((p) => {
@@ -110,7 +110,7 @@
         });
         ns.forEach((a, i) => {
           const bN = ns[(i + 1) % ns.length];
-          const delay = 500 + order * STEP; order++;
+          const delay = 350 + order * STEP; order++;
           edges.push({ a, b: bN, delay });
           a.appear = Math.min(a.appear, delay);
           bN.appear = Math.min(bN.appear, delay + 300);
@@ -118,7 +118,7 @@
       });
 
       const s = L.star;
-      const starAt = 500 + order * STEP + 250;
+      const starAt = 350 + order * STEP + 150;
       const letterBottom = oy + 845 * scale;
       cons = {
         nodes, edges,
@@ -126,7 +126,7 @@
         bounds: {
           top: oy + b.y * scale, bottom: letterBottom,
           left: ox + 168 * scale, right: ox + 1062 * scale, // Breite der Buchstaben (für den Schriftzug)
-          baseline: oy + 750 * scale, scale, revealAt: starAt + 400,
+          baseline: oy + 750 * scale, scale, revealAt: starAt + 150,
         },
       };
     }
