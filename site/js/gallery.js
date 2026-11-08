@@ -8,7 +8,15 @@
   if (idx < 0) { location.replace('index.html'); return; }
 
   const cat = cats[idx];
-  const photos = (window.PMC_PHOTOS || {})[cat.id] || [];
+  // Bildschutz (im Admin einstellbar): Wasserzeichen-Fassung zeigen, Speichern erschweren
+  const prot = data.protection || {};
+  const photos = ((window.PMC_PHOTOS || {})[cat.id] || [])
+    .map((p) => (prot.watermark && p.wm ? Object.assign({}, p, { thumb: p.wm.thumb, full: p.wm.full }) : p));
+  if (prot.noDownload) {
+    document.body.classList.add('no-save');
+    document.addEventListener('contextmenu', (e) => { if (e.target.closest('img, .tile, .lb-stage')) e.preventDefault(); });
+    document.addEventListener('dragstart', (e) => { if (e.target.tagName === 'IMG') e.preventDefault(); });
+  }
   const pad = (n) => String(n).padStart(2, '0');
 
   document.title = cat.name + ' · philmostchill';

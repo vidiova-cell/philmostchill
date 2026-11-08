@@ -136,7 +136,7 @@ async function main() {
     stamp[dir] = [...imported].sort();
 
     // Verwaiste Ausgabedateien aufräumen (nur was in keinem Manifest-Eintrag vorkommt)
-    const keep = new Set(list.flatMap((p) => [path.basename(p.thumb), path.basename(p.full)]));
+    const keep = new Set(list.flatMap((p) => [p.thumb, p.full, p.wm && p.wm.thumb, p.wm && p.wm.full].filter(Boolean).map((f) => path.basename(f))));
     for (const f of await fs.readdir(outDir)) if (!keep.has(f)) await fs.rm(path.join(outDir, f));
   }
 

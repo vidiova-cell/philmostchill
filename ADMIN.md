@@ -28,6 +28,16 @@ Mit dem Admin pflegt Phil seine Webseite direkt vom iPhone aus, nur mit einem Ke
 - **Über Phil**: Überschrift, Text (eine Leerzeile beginnt einen neuen Absatz) und
   Links zu Instagram, E-Mail und anderem.
 
+- **Bildschutz** (Startseite des Admins → *Wasserzeichen & Co.*):
+  - **Wasserzeichen auf Fotos** an/aus, mit eigenem Text (z. B. „© philmostchill“) und Stil:
+    *Dezent* (unten rechts) oder *Kräftig* (diagonal über das ganze Bild). Ist es an, bekommt
+    jedes Foto automatisch eine Fassung mit Wasserzeichen, und die Webseite zeigt nur noch diese.
+    Ausschalten geht jederzeit, dann sind wieder die Fotos ohne Wasserzeichen zu sehen.
+  - **Speichern & Kopieren sperren**: kein Rechtsklick-Speichern, kein Ziehen, kein „Foto sichern“
+    per langem Drücken. Screenshots lassen sich trotzdem nie verhindern.
+- **Impressum & Datenschutz**: Name, Anschrift und E-Mail eintragen. Solange dort Platzhalter
+  stehen, zeigen die Seiten einen Entwurf-Hinweis.
+
 **Wichtig:** Änderungen sammeln sich erst einmal. Unten steht dann z. B.
 „3 Änderungen · Noch nicht live“. Mit **Veröffentlichen** geht alles zusammen raus,
 und nach etwa **einer Minute** ist es auf der Webseite. Danach zeigt die Leiste

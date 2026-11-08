@@ -177,6 +177,120 @@
     }
   }
 
+  // ---------- Bildschutz: Wasserzeichen ----------
+  // Ist das Wasserzeichen an, bekommt jedes Foto zusätzlich eine Fassung mit
+  // Wasserzeichen (p.wm). Die Webseite zeigt dann nur diese. Die sauberen
+  // Dateien bleiben erhalten, damit man es jederzeit wieder ausschalten kann.
+  const PROT_DEFAULT = { watermark: false, watermarkText: '© philmostchill', watermarkStyle: 'ecke', noDownload: false };
+  const prot = () => S.data.protection;
+  const wmKey = () => `${prot().watermarkStyle}|${prot().watermarkText}`;
+  const needsWm = (p) => !p.wm || p.wm.key !== wmKey();
+  const allPhotos = () => Object.entries(S.photos).flatMap(([c, list]) => list.map((p) => ({ c, p })));
+  const missingWm = () => (prot().watermark ? allPhotos().filter(({ p }) => needsWm(p)) : []);
+
+  let wmFont = null;
+  const ensureWmFont = () => wmFont || (wmFont = (document.fonts ? document.fonts.load('600 40px Montserrat') : Promise.resolve()).catch(() => {}));
+
+  function drawWatermark(canvas) {
+    const pr = prot();
+    const text = (pr.watermarkText || '© philmostchill').trim();
+    const x = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    x.save();
+    if (pr.watermarkStyle === 'diagonal') {
+      // kräftig: Schriftzug diagonal über das ganze Bild verteilt
+      const size = Math.round(Math.max(W, H) * 0.034);
+      x.font = `600 ${size}px Montserrat, sans-serif`;
+      x.textBaseline = 'middle';
+      x.fillStyle = 'rgba(255,255,255,0.2)';
+      x.strokeStyle = 'rgba(0,0,0,0.12)';
+      x.lineWidth = Math.max(1, size / 22);
+      x.translate(W / 2, H / 2);
+      x.rotate(-Math.PI / 6);
+      const tw = x.measureText(text).width + size * 3;
+      const th = size * 4.2;
+      const R = Math.hypot(W, H) / 2 + tw;
+      let row = 0;
+      for (let yy = -R; yy < R; yy += th, row++) {
+        for (let xx = -R + (row % 2 ? tw / 2 : 0); xx < R; xx += tw) { x.strokeText(text, xx, yy); x.fillText(text, xx, yy); }
+      }
+    } else {
+      // dezent: Schriftzug unten rechts
+      const size = Math.round(Math.max(16, Math.min(W, H) * 0.034));
+      x.font = `600 ${size}px Montserrat, sans-serif`;
+      x.textAlign = 'right';
+      x.textBaseline = 'alphabetic';
+      x.shadowColor = 'rgba(0,0,0,0.5)';
+      x.shadowBlur = size * 0.45;
+      x.fillStyle = 'rgba(255,255,255,0.82)';
+      x.fillText(text, W - size * 0.9, H - size * 0.85);
+    }
+    x.restore();
+  }
+
+  async function loadImg(src) {
+    const img = new Image();
+    if (/^https?:/.test(src) && !src.startsWith(location.origin)) img.crossOrigin = 'anonymous';
+    img.src = src;
+    await img.decode();
+    return img;
+  }
+  function copyCanvas(src, w, h) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(src, 0, 0, w, h);
+    return c;
+  }
+  // Sichere Quelle für die saubere Vollansicht: Vorschau (neu), Webseite oder Repository
+  async function loadFull(rel) {
+    if (S.previews.has(rel)) return loadImg(S.previews.get(rel));
+    try { return await loadImg(SITE + rel); } catch (e) { return loadImg(RAW + rel); }
+  }
+
+  function dropFiles(rels) {
+    for (const rel of rels) {
+      if (!rel) continue;
+      if (S.uploads.has(rel)) {
+        S.uploads.delete(rel);
+        URL.revokeObjectURL(S.previews.get(rel));
+        S.previews.delete(rel);
+      } else {
+        S.deletes.add(rel);
+      }
+    }
+  }
+
+  // Erzeugt die Wasserzeichen-Fassung eines Fotos (Vollbild + Vorschau)
+  async function makeWm(p, fullImg) {
+    await ensureWmFont();
+    const img = fullImg || (await loadFull(p.full));
+    const c = copyCanvas(img, img.naturalWidth || img.width, img.naturalHeight || img.height);
+    drawWatermark(c);
+    const t = scaleStep(c, c.width, c.height, SIZES.thumb, SIZES.thumb * 2);
+    const [fb, tb] = await Promise.all([encode(c, 0.82), encode(t, 0.78)]);
+    const ext = (b) => (b.type === 'image/webp' ? 'webp' : 'jpg');
+    const base = p.full.replace(/-\d+\.\w+$/, '') + '-wz' + Date.now().toString(36);
+    const wm = { full: `${base}-${SIZES.full}.${ext(fb)}`, thumb: `${base}-${SIZES.thumb}.${ext(tb)}`, key: wmKey() };
+    S.uploads.set(wm.full, fb); S.uploads.set(wm.thumb, tb);
+    S.previews.set(wm.full, URL.createObjectURL(fb)); S.previews.set(wm.thumb, URL.createObjectURL(tb));
+    if (p.wm) dropFiles([p.wm.full, p.wm.thumb]); // alte Fassung (anderer Text/Stil) ersetzen
+    p.wm = wm;
+  }
+
+  // Alle fehlenden/veralteten Wasserzeichen erzeugen
+  async function ensureWatermarks(onProgress) {
+    const todo = missingWm();
+    const failed = [];
+    for (let i = 0; i < todo.length; i++) {
+      onProgress && onProgress(`Wasserzeichen ${i + 1} von ${todo.length} …`, i / todo.length);
+      try { await makeWm(todo[i].p); } catch (e) { failed.push(todo[i].p.title || todo[i].p.full); }
+    }
+    if (todo.length - failed.length > 0) {
+      logChange('wm', (n) => `Wasserzeichen für ${plural(n, 'Foto', 'Fotos')} erstellt`, todo.length - failed.length);
+    }
+    if (failed.length) throw new Error(`Wasserzeichen fehlgeschlagen bei: ${failed.join(', ')}`);
+  }
+
   async function addPhotos(catId, fileList, $progress) {
     const files = [...fileList].filter((f) => f.type.startsWith('image/') || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name));
     if (!files.length) return;
@@ -197,7 +311,9 @@
         const full = `img/fotos/${catId}/${base}-${SIZES.full}.${ext(r.full)}`;
         S.uploads.set(thumb, r.thumb); S.uploads.set(full, r.full);
         S.previews.set(thumb, URL.createObjectURL(r.thumb)); S.previews.set(full, URL.createObjectURL(r.full));
-        added.push({ thumb, full, w: r.w, h: r.h, title, upload: true });
+        const entry = { thumb, full, w: r.w, h: r.h, title, upload: true };
+        if (prot().watermark) await makeWm(entry);
+        added.push(entry);
       } catch (e) {
         failed.push(`${f.name}: ${e.message}`);
       }
@@ -218,6 +334,7 @@
     const list = photosOf(catId);
     const [p] = list.splice(index, 1);
     const name = cat(catId).name;
+    if (p.wm) dropFiles([p.wm.full, p.wm.thumb]);
     for (const rel of [p.thumb, p.full]) {
       if (S.uploads.has(rel)) {
         S.uploads.delete(rel);
@@ -251,6 +368,9 @@
     renderBar();
     try {
       normalizeContacts();
+      if (missingWm().length) {
+        await ensureWatermarks((t) => { S.progress = t; renderBar(); });
+      }
       const files = [];
       for (const [rel, blob] of S.uploads) files.push({ path: 'site/' + rel, blob });
       if (dataChanged()) files.push({ path: CFG.paths.data, text: PMCStore.stringifyWrapped(S.meta.dataHead, S.data) });
@@ -382,6 +502,14 @@
             <span class="row-sub">${esc(a.title)} ${esc((a.text || [])[0] || '')}</span></span>${ICON.chev}
         </a>
       </div>
+      <h2 class="section">Bildschutz</h2>
+      <div class="list">
+        <a class="row" href="#/bildschutz" style="--c:#f2c461">
+          <span class="row-dot"></span>
+          <span class="row-main"><span class="row-title">Wasserzeichen & Co.</span>
+            <span class="row-sub">${esc(protSummary())}${missingWm().length ? ' · ⚠︎ ' + missingWm().length + ' offen' : ''}</span></span>${ICON.chev}
+        </a>
+      </div>
       <h2 class="section">Rechtliches</h2>
       <div class="list">
         <a class="row" href="#/rechtliches" style="--c:#9aa3b5">
@@ -425,7 +553,7 @@
     const placeholders = list.filter((p) => p.placeholder).length;
     const grid = list.length ? list.map((p, i) => `
       <button class="ph" data-i="${i}" aria-label="Foto ${i + 1}${p.title ? ': ' + esc(p.title) : ''} bearbeiten">
-        ${imgTag(p.thumb, p.title)}
+        ${imgTag(prot().watermark && p.wm ? p.wm.thumb : p.thumb, p.title)}
         ${S.uploads.has(p.thumb) ? '<span class="ph-badge new">Neu</span>' : p.placeholder ? '<span class="ph-badge">Platzhalter</span>' : ''}
         <span class="ph-no">${i + 1}</span>
       </button>`).join('') : '';
@@ -485,7 +613,7 @@
     if (!p) return;
     openSheet(`
       <h3>Foto ${i + 1} von ${list.length}</h3>
-      <div class="sheet-photo">${imgTag(p.full, p.title, false)}</div>
+      <div class="sheet-photo">${imgTag(prot().watermark && p.wm ? p.wm.full : p.full, p.title, false)}</div>
       <label class="field"><span>Titel (optional)</span><input class="input" data-title value="${esc(p.title || '')}" maxlength="60" placeholder="z. B. Nebel im Wald" autocomplete="off" enterkeyhint="done"></label>
       <div class="btn-row">
         <button class="btn" data-move="-1" ${i === 0 ? 'disabled' : ''}>${ICON.left}Nach vorn</button>
@@ -570,6 +698,95 @@
         if (last) last.querySelector(label ? '.input-url' : '.input').focus();
       };
     });
+  }
+
+  // ---------- Bildschutz-Seite ----------
+  function protSummary() {
+    const pr = prot();
+    return `Wasserzeichen ${pr.watermark ? 'an' : 'aus'} · Speichern ${pr.noDownload ? 'erschwert' : 'erlaubt'}`;
+  }
+  function viewProtection() {
+    const pr = prot();
+    const missing = missingWm().length;
+    const total = allPhotos().length;
+    const sample = allPhotos()[0];
+    $app.innerHTML = `<div class="screen">
+      ${topbar('<h1>Bildschutz</h1>', { back: '#/' })}
+      <p class="hint-text" style="font-size:14px">Hundertprozentigen Schutz gibt es im Netz nicht – Screenshots gehen immer.
+        Ein Wasserzeichen schreckt aber wirksam ab, und gesperrtes Speichern hält Gelegenheits-Kopierer fern.</p>
+
+      <h2 class="section">Wasserzeichen</h2>
+      <div class="card switch-card">
+        <label class="switch-row">
+          <span><strong>Wasserzeichen auf Fotos</strong><small>Die Webseite zeigt nur noch Fotos mit Wasserzeichen.</small></span>
+          <input type="checkbox" class="switch" data-p="watermark" ${pr.watermark ? 'checked' : ''}>
+        </label>
+      </div>
+      ${pr.watermark ? `
+        <div class="spacer"></div>
+        <label class="field"><span>Text</span><input class="input" data-p="watermarkText" value="${esc(pr.watermarkText)}" maxlength="40" autocomplete="off"></label>
+        <div class="field"><span>Stil</span>
+          <div class="seg">
+            <button class="seg-btn" data-style="ecke" aria-pressed="${pr.watermarkStyle !== 'diagonal'}">Dezent · Ecke</button>
+            <button class="seg-btn" data-style="diagonal" aria-pressed="${pr.watermarkStyle === 'diagonal'}">Kräftig · diagonal</button>
+          </div>
+        </div>
+        ${sample ? '<div class="sheet-photo wm-preview"><canvas data-preview></canvas></div>' : ''}
+        <p class="hint-text">${missing
+          ? `${plural(missing, 'Foto braucht', 'Fotos brauchen')} noch ein Wasserzeichen – wird beim Veröffentlichen automatisch erstellt.`
+          : `Alle ${plural(total, 'Foto', 'Fotos')} haben ein Wasserzeichen.`}</p>
+        ${missing ? '<button class="btn btn-block" data-make>Jetzt erstellen</button><div class="card progress" hidden><span></span><div class="progress-bar"><i></i></div></div>' : ''}
+      ` : '<p class="hint-text">Aus: Die Webseite zeigt die Fotos ohne Wasserzeichen.</p>'}
+
+      <h2 class="section">Speichern erschweren</h2>
+      <div class="card switch-card">
+        <label class="switch-row">
+          <span><strong>Speichern & Kopieren sperren</strong><small>Kein Rechtsklick-Speichern, kein Ziehen, kein „Foto sichern“ per langem Drücken am Handy.</small></span>
+          <input type="checkbox" class="switch" data-p="noDownload" ${pr.noDownload ? 'checked' : ''}>
+        </label>
+      </div>
+      <p class="hint-text">Hinweis: Die Dateien liegen zusätzlich im öffentlichen GitHub-Projekt. Wer sich auskennt, findet dort auch die Fassungen ohne Wasserzeichen.</p>
+    </div>`;
+
+    const mark = () => logChange('prot', 'Bildschutz-Einstellungen geändert');
+    $app.querySelectorAll('input.switch').forEach((inp) => {
+      inp.onchange = () => { pr[inp.dataset.p] = inp.checked; mark(); render(); };
+    });
+    const txt = $app.querySelector('[data-p="watermarkText"]');
+    if (txt) {
+      txt.oninput = () => { pr.watermarkText = txt.value; mark(); drawPreview(); };
+      txt.onchange = () => { if (!pr.watermarkText.trim()) pr.watermarkText = PROT_DEFAULT.watermarkText; render(); };
+    }
+    $app.querySelectorAll('[data-style]').forEach((b) => {
+      b.onclick = () => { pr.watermarkStyle = b.dataset.style; mark(); render(); };
+    });
+    const mk = $app.querySelector('[data-make]');
+    if (mk) mk.onclick = async () => {
+      const $pg = $app.querySelector('.progress');
+      mk.disabled = true; $pg.hidden = false;
+      try {
+        await ensureWatermarks((t, f) => { $pg.querySelector('span').textContent = t; $pg.querySelector('i').style.width = `${f * 100}%`; });
+        toast('Wasserzeichen erstellt – noch „Veröffentlichen“ tippen.');
+      } catch (e) { toast(e.message, true); }
+      render();
+    };
+
+    // Vorschau am ersten Foto
+    let previewImg = null;
+    async function drawPreview() {
+      const cv = $app.querySelector('[data-preview]');
+      if (!cv || !sample) return;
+      try {
+        await ensureWmFont();
+        previewImg = previewImg || (await loadFull(sample.p.full));
+        const w = Math.min(900, previewImg.naturalWidth), h = Math.round(w * previewImg.naturalHeight / previewImg.naturalWidth);
+        const c = copyCanvas(previewImg, w, h);
+        drawWatermark(c);
+        cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(c, 0, 0);
+      } catch (e) { /* Vorschau ist nur nice-to-have */ }
+    }
+    drawPreview();
   }
 
   // ---------- Impressum & Datenschutz ----------
@@ -747,6 +964,7 @@
     if (m) viewCategory(decodeURIComponent(m[1]));
     else if (route === '/ueber') viewAbout();
     else if (route === '/rechtliches') viewLegal();
+    else if (route === '/bildschutz') viewProtection();
     else viewHome();
     renderBar();
     window.scrollTo(0, keepScroll);
@@ -760,6 +978,7 @@
       const r = await store.load(CFG.paths);
       S.data = r.data; S.photos = r.photos; S.meta = r.meta;
       S.data.about = S.data.about || { title: '', text: [], contact: [] };
+      S.data.protection = Object.assign({}, PROT_DEFAULT, S.data.protection || {});
       S.data.legal = S.data.legal || { name: '[Vorname Nachname]', street: '[Straße Hausnummer]', city: '[PLZ Ort]', email: '[E-Mail-Adresse]', phone: '' };
       S.orig = snapshot();
       render();

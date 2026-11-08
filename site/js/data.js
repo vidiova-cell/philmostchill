@@ -110,5 +110,11 @@ window.PMC = {
     "city": "[PLZ Ort]",
     "email": "[E-Mail-Adresse]",
     "phone": ""
+  },
+  "protection": {
+    "watermark": false,
+    "watermarkText": "© philmostchill",
+    "watermarkStyle": "ecke",
+    "noDownload": false
   }
 };
