@@ -1,7 +1,7 @@
 # philmostchill
 
 Fotografie-Portfolio als Universum. Auf der Startseite zeichnen die Sterne das
-**PMC-Logo** an den Himmel, darüber leuchtet der goldene Logo-Stern. Die hellen Sterne
+**Logo-P** an den Himmel, daneben leuchtet der goldene Logo-Stern, darunter steht PHILMOSTCHILL. Die hellen Sterne
 ringsum sind Kategorien, ein Klick darauf startet einen Warp in die jeweilige Galerie.
 Unten rechts sitzt das echte Sternbild **Waage** (Phils Sternzeichen), dahinter steckt
 „Über Phil“.
@@ -21,7 +21,7 @@ site/              ← DAS ist die Webseite (dieser Ordner wird veröffentlicht)
   admin/           📱 Admin-Oberfläche (Fotos, Texte, Über Phil) – siehe ADMIN.md
   js/data.js       ✏️  Kategorien, Texte, Farben, Positionen der Sterne (JSON-Format)
   js/photos.js     ⚙️  Fotoliste – gepflegt über den Admin und `npm run fotos`
-  js/pmc-logo.js   PMC-Logo als Geometrie (für Sternbild und Logo-Export)
+  js/pmc-logo.js   Logo (P + Stern) als Geometrie (für Sternbild und Logo-Export)
   js/sky.js        Sternenhimmel, Sternbild-Schrift, Warp-Effekt
   img/fotos/       ⚙️  automatisch erzeugte, verkleinerte Fotos (WebP)
   fonts/           Schriften lokal eingebunden (keine Google-Server → DSGVO-freundlich)
@@ -121,6 +121,7 @@ Den Inhalt von `site/` per FTP in das Webverzeichnis hochladen.
 - [ ] Echte Fotos statt KI-Platzhalter (über den Admin)
 - [ ] „Über Phil“-Text und Kontaktlinks im Admin eintragen
 - [ ] Zum Livegang `site/robots.txt` wieder für Suchmaschinen öffnen
-- [ ] Impressum/Datenschutz prüfen, sobald die Seite öffentlich ist und z. B. für Aufträge wirbt
+- [ ] Impressum & Datenschutz: echte Angaben im Admin unter „Impressum & Datenschutz“ eintragen
+      (Seiten `site/impressum.html` / `site/datenschutz.html`, Angaben in `data.js` → `legal`)
 - [x] Vorschaubild für Social Media (`og:image`)
 - [x] Admin-Oberfläche fürs iPhone

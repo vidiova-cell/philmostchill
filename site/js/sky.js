@@ -84,7 +84,7 @@
     }
 
     /*
-     * PMC-Logo als Sternbild: jede Ecke der Buchstaben wird ein Stern,
+     * Logo als Sternbild: jede Ecke des P wird ein Stern,
      * die Kanten werden nacheinander eingezeichnet. Danach erscheint der
      * goldene Vierzack-Stern wie im Logo.
      */
@@ -92,10 +92,13 @@
       const L = opts.logo;
       const rnd = mulberry32(2024);
       const narrow = isNarrow(W, H);
-      const b = L.bounds;
-      const scale = Math.min((W * (narrow ? 0.84 : 0.52)) / b.w, (H * (narrow ? 0.34 : 0.5)) / b.h);
-      const cx = W / 2, cy = H * (narrow ? 0.43 : 0.46);
-      const ox = cx - (b.x + b.w / 2) * scale, oy = cy - (b.y + b.h / 2) * scale;
+      const b = L.bounds, wm = L.wordmark;
+      // Gesamtkomposition: P + Stern oben, Schriftzug darunter
+      const cx0 = Math.min(b.x, wm.x0), cx1 = Math.max(b.x + b.w, wm.x1);
+      const cy0 = b.y, cy1 = wm.baseline;
+      const scale = Math.min((W * (narrow ? 0.8 : 0.4)) / (cx1 - cx0), (H * (narrow ? 0.4 : 0.62)) / (cy1 - cy0));
+      const cx = W / 2, cy = H * (narrow ? 0.42 : 0.47);
+      const ox = cx - ((cx0 + cx1) / 2) * scale, oy = cy - ((cy0 + cy1) / 2) * scale;
       const map = (p) => ({ x: ox + p[0] * scale, y: oy + p[1] * scale });
       unit = scale * 270;
 
@@ -126,8 +129,8 @@
         star: { path: new Path2D(L.starPath()), x: ox, y: oy, scale, cx: ox + s.cx * scale, cy: oy + s.cy * scale, appear: starAt, color: L.gold },
         bounds: {
           top: oy + b.y * scale, bottom: letterBottom,
-          left: ox + 168 * scale, right: ox + 1062 * scale, // Breite der Buchstaben (für den Schriftzug)
-          baseline: oy + 750 * scale, scale, revealAt: starAt + 150,
+          left: ox + wm.x0 * scale, right: ox + wm.x1 * scale, // Breite des Schriftzugs
+          scale, revealAt: starAt + 150,
         },
       };
     }

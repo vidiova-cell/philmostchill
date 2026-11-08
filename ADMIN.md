@@ -1,4 +1,4 @@
-# PMC Admin
+# Admin · philmostchill
 
 Mit dem Admin pflegt Phil seine Webseite direkt vom iPhone aus, nur mit einem Kennwort:
 **https://vidiova-cell.github.io/philmostchill/admin/**

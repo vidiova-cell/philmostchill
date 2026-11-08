@@ -69,7 +69,7 @@ a { color: var(--gold); }
 .icon-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 .brand { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-.brand img { height: 26px; width: auto; }
+.brand img { height: 30px; width: auto; }
 .brand span { font: 600 12px/1 var(--sans); letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-faint); }
 
 h2.section {
@@ -221,7 +221,7 @@ h2.section {
 
 /* ---------- Anmeldung ---------- */
 .login { min-height: 100dvh; display: grid; align-content: center; gap: 22px; padding-top: calc(var(--safe-t) + 24px); }
-.login-logo { width: 150px; margin: 0 auto 6px; }
+.login-logo { width: 116px; margin: 0 auto 6px; }
 .login h1 { margin: 0; text-align: center; font: 600 22px/1.2 var(--display); letter-spacing: 0.05em; text-transform: uppercase; }
 .login p { margin: 0; text-align: center; color: var(--ink-dim); font-size: 14px; }
 .login details { font-size: 14px; color: var(--ink-dim); }

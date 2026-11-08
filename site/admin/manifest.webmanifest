@@ -1,6 +1,6 @@
 {
-  "name": "PMC Admin",
-  "short_name": "PMC Admin",
+  "name": "philmostchill Admin",
+  "short_name": "Phil Admin",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -53,8 +53,8 @@ window.PMC = {
         "y": 0.24
       },
       "posNarrow": {
-        "x": 0.76,
-        "y": 0.65
+        "x": 0.78,
+        "y": 0.69
       }
     },
     {
@@ -103,5 +103,12 @@ window.PMC = {
       "Waage, also immer auf der Suche nach Balance: zwischen Licht und Schatten, Ruhe und Bewegung, Plan und Zufall."
     ],
     "contact": []
+  },
+  "legal": {
+    "name": "[Vorname Nachname]",
+    "street": "[Straße Hausnummer]",
+    "city": "[PLZ Ort]",
+    "email": "[E-Mail-Adresse]",
+    "phone": ""
   }
 };

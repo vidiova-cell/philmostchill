@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="128 174 504 711" width="504" height="711">
+  <title>philmostchill</title>
+  <defs>
+    <mask id="cut" maskUnits="userSpaceOnUse" x="128" y="174" width="504" height="711">
+      <rect x="128" y="174" width="504" height="711" fill="#fff"/>
+      <path d="M452,214 C457.95,321 469,332.05 592,338 C469,343.95 457.95,355 452,504 C446.05,355 435,343.95 260,338 C435,332.05 446.05,321 452,214 Z" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="round"/>
+    </mask>
+  </defs>
+  
+  <g fill="#f2f0ea" mask="url(#cut)">
+    <path d="M168,378 L440,378 L488,426 L488,560 L430,618 L262,618 L262,757 L168,845 L168,650 L262,556 L262,540 L412,540 L412,455 L245,455 L245,483 L168,560 Z"/>
+    
+  </g>
+  <path d="M452,214 C457.95,321 469,332.05 592,338 C469,343.95 457.95,355 452,504 C446.05,355 435,343.95 260,338 C435,332.05 446.05,321 452,214 Z" fill="#f9b80f"/>
+  
+</svg>

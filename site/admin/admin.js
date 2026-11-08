@@ -368,7 +368,7 @@
     }).join('');
     const a = S.data.about;
     $app.innerHTML = `<div class="screen">
-      ${topbar(`<span class="brand"><img src="../img/logo/pmc.svg" alt="PMC"><span>Admin</span></span>`, {
+      ${topbar(`<span class="brand"><img src="../img/logo/p.svg" alt="philmostchill"><span>Admin</span></span>`, {
         right: `<button class="icon-btn" data-menu aria-label="Menü">${ICON.more}</button>`,
       })}
       ${DEMO ? '<p class="demo-banner">Demo-Modus: Es wird nichts wirklich gespeichert.</p>' : ''}
@@ -380,6 +380,14 @@
           <span class="row-dot"></span>
           <span class="row-main"><span class="row-title">Über Phil</span>
             <span class="row-sub">${esc(a.title)} ${esc((a.text || [])[0] || '')}</span></span>${ICON.chev}
+        </a>
+      </div>
+      <h2 class="section">Rechtliches</h2>
+      <div class="list">
+        <a class="row" href="#/rechtliches" style="--c:#9aa3b5">
+          <span class="row-dot"></span>
+          <span class="row-main"><span class="row-title">Impressum & Datenschutz</span>
+            <span class="row-sub">${legalIncomplete() ? '⚠︎ Noch Platzhalter – bitte ausfüllen' : esc(S.data.legal.name + ' · ' + S.data.legal.city)}</span></span>${ICON.chev}
         </a>
       </div>
       ${isDirty() ? '<div class="spacer"></div><button class="btn btn-block btn-ghost" data-discard>Änderungen verwerfen</button>' : ''}
@@ -564,6 +572,38 @@
     });
   }
 
+  // ---------- Impressum & Datenschutz ----------
+  const isPlaceholder = (v) => !v || /^\s*\[.*\]\s*$/.test(v);
+  function legalIncomplete() {
+    const l = S.data.legal || {};
+    return ['name', 'street', 'city', 'email'].some((k) => isPlaceholder(l[k]));
+  }
+  function viewLegal() {
+    const l = S.data.legal;
+    const field = (k, label, opts = '') => `<label class="field"><span>${label}</span>
+      <input class="input" data-l="${k}" value="${esc(isPlaceholder(l[k]) ? '' : l[k])}" placeholder="${esc(isPlaceholder(l[k]) ? l[k] || '' : '')}" autocomplete="off" ${opts}></label>`;
+    $app.innerHTML = `<div class="screen">
+      ${topbar('<h1>Impressum</h1>', { back: '#/' })}
+      <p class="hint-text" style="font-size:14px">Diese Angaben erscheinen im <a href="../impressum.html" target="_blank" rel="noopener">Impressum</a>
+        und in der <a href="../datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a>.
+        Für eine öffentliche Webseite in Deutschland sind Name, ladungsfähige Anschrift und E-Mail Pflicht.</p>
+      <h2 class="section">Angaben</h2>
+      ${field('name', 'Vor- und Nachname', 'autocapitalize="words"')}
+      ${field('street', 'Straße und Hausnummer', 'autocapitalize="words"')}
+      ${field('city', 'PLZ und Ort', 'autocapitalize="words"')}
+      ${field('email', 'E-Mail-Adresse', 'type="email" inputmode="email" autocapitalize="off"')}
+      ${field('phone', 'Telefon (optional)', 'type="tel" inputmode="tel"')}
+    </div>`;
+    $app.querySelectorAll('[data-l]').forEach((inp) => {
+      inp.oninput = () => {
+        const k = inp.dataset.l;
+        const v = inp.value.trim();
+        l[k] = v || (k === 'phone' ? '' : inp.placeholder || '');
+        logChange('legal', 'Impressum-Angaben geändert');
+      };
+    });
+  }
+
   // ---------- Anmeldung per Kennwort ----------
   // Der GitHub-Schlüssel liegt verschlüsselt in admin/zugang.json (siehe zugang.js)
   async function fetchZugang() {
@@ -588,7 +628,7 @@
     $app.innerHTML = '<div class="screen login"><p>Einen Moment …</p></div>';
     const zugang = await fetchZugang();
     if (location.hash.replace(/^#/, '') === '/einrichten') return; // inzwischen weiternavigiert
-    const logo = '<img class="login-logo" src="../img/logo/pmc-logo.svg" alt="philmostchill">';
+    const logo = '<img class="login-logo" src="../img/logo/logo.svg" alt="philmostchill">';
     if (!zugang) {
       $app.innerHTML = `<div class="screen login">${logo}<h1>Admin</h1>
         <p>Für den Admin ist noch kein Kennwort eingerichtet.</p>
@@ -706,6 +746,7 @@
     const m = route.match(/^\/kat\/(.+)$/);
     if (m) viewCategory(decodeURIComponent(m[1]));
     else if (route === '/ueber') viewAbout();
+    else if (route === '/rechtliches') viewLegal();
     else viewHome();
     renderBar();
     window.scrollTo(0, keepScroll);
@@ -719,6 +760,7 @@
       const r = await store.load(CFG.paths);
       S.data = r.data; S.photos = r.photos; S.meta = r.meta;
       S.data.about = S.data.about || { title: '', text: [], contact: [] };
+      S.data.legal = S.data.legal || { name: '[Vorname Nachname]', street: '[Straße Hausnummer]', city: '[PLZ Ort]', email: '[E-Mail-Adresse]', phone: '' };
       S.orig = snapshot();
       render();
     } catch (e) {

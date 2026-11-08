@@ -1,36 +1,31 @@
 /*
- * PMC-Logo als Geometrie – EINE Quelle für alles:
+ * Logo (P + Stern) als Geometrie – EINE Quelle für alles:
  *  - die SVG-Logodateien (tools/logo.mjs erzeugt sie daraus)
- *  - das PMC-Sternbild auf der Startseite (sky.js)
+ *  - das Logo-Sternbild auf der Startseite (sky.js)
  *
- * Nachgezeichnet nach Phils Logo-Entwurf. Koordinaten im 1254×1254-Raster
- * des Originals: oben = 378, Grundlinie = 750, der P-Stamm reicht bis 845.
+ * Das P ist nach Phils erstem Logo-Entwurf nachgezeichnet. Koordinaten im
+ * 1254×1254-Raster des Originals: oben = 378, der P-Stamm reicht bis 845.
  */
 (function (root) {
   'use strict';
   const PMCLogo = {
-    // Umrisse der Buchstaben (je ein geschlossenes Polygon)
+    // Umriss des P (geschlossenes Polygon) – Form aus Phils erstem Logo-Entwurf
     letters: {
       P: [[168, 378], [440, 378], [488, 426], [488, 560], [430, 618], [262, 618], [262, 757], [168, 845],
         [168, 650], [262, 556], [262, 540], [412, 540], [412, 455], [245, 455], [245, 483], [168, 560]],
-      M: [[452, 378], [600, 378], [625, 500], [702, 378], [806, 378], [768, 416], [768, 750], [690, 750],
-        [690, 540], [619, 605], [548, 528], [548, 750], [447, 750], [447, 618], [500, 565], [500, 426]],
-      C: [[830, 378], [978, 378], [1062, 430], [1062, 530], [978, 455], [858, 455], [858, 672], [978, 672],
-        [978, 640], [1062, 622], [1062, 750], [820, 750], [780, 710], [780, 428]],
     },
     // Der gelbe Vierzack-Stern: Mitte, Armlängen (oben, rechts, unten, links), Taille
-    star: { cx: 1020, cy: 328, arms: [170, 192, 228, 262], waist: 22 },
-    // Farbtropfen für die "Drip"-Variante: [x, y (Unterkante), Länge, Breite]
+    star: { cx: 452, cy: 338, arms: [124, 140, 166, 192], waist: 17 },
+    // Farbtropfen für die "Drip"-Variante: [x, y (Unterkante), Länge, Breite, Ansatzbreite]
     drips: [
-      [300, 618, 150, 10], [352, 618, 52, 8],
-      [470, 750, 96, 9], [522, 750, 38, 7], [619, 598, 125, 10, 0.15],
-      [722, 750, 64, 8], [754, 750, 30, 6],
-      [842, 750, 72, 8], [905, 750, 40, 7], [1000, 750, 98, 9], [1046, 750, 46, 7],
-      [935, 455, 44, 7], [372, 455, 30, 6],
+      [300, 618, 150, 10], [352, 618, 52, 8], [404, 618, 92, 9],
+      [372, 455, 30, 6], [214, 801, 70, 8, 0.4],
     ],
+    // Schriftzug PHILMOSTCHILL unter dem P (zentriert unter P + Stern)
+    wordmark: { x0: 92, x1: 612, baseline: 938, size: 34 },
     gold: '#f9b80f',
     white: '#f2f0ea',
-    bounds: { x: 168, y: 158, w: 1042, h: 687 }, // inkl. Stern
+    bounds: { x: 168, y: 214, w: 424, h: 631 }, // P inkl. Stern
 
     // 4-Zack-Stern als SVG-Pfad (konkave Seiten wie im Logo)
     starPath(s = PMCLogo.star) {

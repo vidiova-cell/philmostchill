@@ -47,12 +47,16 @@ const dripsD = L.drips.map(([x, y, len, w0, flare = 1]) => {
   return `M${x - h - f},${y - 2} L${x + h + f},${y - 2} Q${x + h},${y} ${x + h},${y + f * 2} ` +
     `L${x + h * 0.9},${end - r} A${r},${r} 0 0 1 ${x - h * 0.9},${end - r} L${x - h},${y + f * 2} Q${x - h},${y} ${x - h - f},${y - 2} Z`;
 }).join(' ');
-const wordD = wordmark('PHILMOSTCHILL', { x0: 172, x1: 1090, baseline: 935, size: 46 });
+const WM = L.wordmark;
+const wordD = wordmark('PHILMOSTCHILL', WM);
+const dripBottom = Math.max(845, ...L.drips.map(([, y, len]) => y + len + 8));
 
 function svg({ drips = false, word = true, bg = null, pad = 40, color = L.white, gold = L.gold } = {}) {
-  const top = L.bounds.y - pad;
-  const bottom = (word ? 950 : (drips ? 870 : 845)) + pad;
-  const left = 150 - pad, right = 1215 + pad;
+  const B = L.bounds;
+  const top = B.y - pad;
+  const bottom = Math.max(word ? WM.baseline + 4 : 0, drips ? dripBottom : 845) + pad;
+  const left = (word ? Math.min(B.x, WM.x0) : B.x) - pad;
+  const right = (word ? Math.max(B.x + B.w, WM.x1) : B.x + B.w) + pad;
   const w = right - left, h = bottom - top;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${left} ${top} ${w} ${h}" width="${w}" height="${h}">
   <title>philmostchill</title>
@@ -91,11 +95,16 @@ const OUT = path.join(ROOT, 'logo');
 await fs.mkdir(WEB, { recursive: true });
 await fs.mkdir(OUT, { recursive: true });
 
+// Alte PMC-Dateien entfernen (Logo ist jetzt nur noch das P)
+for (const dir of [WEB, OUT]) {
+  for (const f of await fs.readdir(dir)) if (f.startsWith('pmc')) await fs.rm(path.join(dir, f));
+}
+
 const files = {
-  'pmc-logo.svg': svg(),
-  'pmc-logo-drips.svg': svg({ drips: true }),
-  'pmc.svg': svg({ word: false }),
-  'pmc-drips.svg': svg({ word: false, drips: true }),
+  'logo.svg': svg(), // P + Stern + Schriftzug
+  'logo-drips.svg': svg({ drips: true }),
+  'p.svg': svg({ word: false }), // nur P + Stern
+  'p-drips.svg': svg({ word: false, drips: true }),
   'stern.svg': starSvg(),
   // symmetrischer Funkelstern für die Kategorie-Sterne der Webseite
   'funkel.svg': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 -100 200 200"><path d="${L.starPath({ cx: 0, cy: 0, arms: [100, 100, 100, 100], waist: 9 })}" fill="#fff"/></svg>
@@ -110,13 +119,15 @@ await fs.writeFile(path.join(ROOT, 'site/img/favicon.svg'), starSvg({ bg: '#0505
 
 // PNGs für Phil
 const png = async (content, file, width) => sharp(Buffer.from(content), { density: 300 }).resize({ width }).png().toFile(path.join(OUT, file));
-await png(svg(), 'pmc-logo-transparent.png', 2400);
-await png(svg({ drips: true }), 'pmc-logo-drips-transparent.png', 2400);
-await png(svg({ bg: '#050505' }), 'pmc-logo-schwarz.png', 2400);
-await png(svg({ drips: true, bg: '#050505' }), 'pmc-logo-drips-schwarz.png', 2400);
+await png(svg(), 'logo-transparent.png', 2400);
+await png(svg({ drips: true }), 'logo-drips-transparent.png', 2400);
+await png(svg({ bg: '#050505' }), 'logo-schwarz.png', 2400);
+await png(svg({ drips: true, bg: '#050505' }), 'logo-drips-schwarz.png', 2400);
+await png(svg({ word: false }), 'p-transparent.png', 1600);
+await png(svg({ word: false, bg: '#050505' }), 'p-schwarz.png', 1600);
 // Instagram-Profilbild (quadratisch, Kreis-tauglich)
 const square = (inner) => `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080"><rect width="1080" height="1080" fill="#050505"/>${inner}</svg>`;
-const pmcOnly = await sharp(Buffer.from(svg({ word: false })), { density: 300 }).resize({ width: 760 }).png().toBuffer();
+const pmcOnly = await sharp(Buffer.from(svg({ word: false })), { density: 300 }).resize({ width: 700, height: 700, fit: 'inside' }).png().toBuffer();
 const meta = await sharp(pmcOnly).metadata();
 await sharp(Buffer.from(square(''))).composite([{ input: pmcOnly, left: Math.round((1080 - meta.width) / 2), top: Math.round((1080 - meta.height) / 2) }])
   .png().toFile(path.join(OUT, 'instagram-profilbild.png'));
