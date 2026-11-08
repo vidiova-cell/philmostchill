@@ -1,10 +1,16 @@
-# Veröffentlicht den Ordner site/ auf GitHub Pages – bei jedem Push auf main.
+# Veröffentlicht die Webseite auf GitHub Pages:
+#   main               → https://vidiova-cell.github.io/philmostchill/
+#   PREVIEW_BRANCH     → https://vidiova-cell.github.io/philmostchill/vorschau/
+# Läuft bei jedem Push auf einen der beiden Branches und baut immer beide zusammen.
 name: Seite veröffentlichen
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'design/**']
   workflow_dispatch:
+
+env:
+  PREVIEW_BRANCH: design/logo-pmc
 
 permissions:
   contents: read
@@ -22,10 +28,33 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Live-Fassung (main) holen
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: live
+
+      - name: Vorschau-Fassung holen
+        id: preview
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: ${{ env.PREVIEW_BRANCH }}
+          path: preview
+
+      - name: Seite zusammenbauen
+        run: |
+          mkdir -p _site
+          cp -r live/site/. _site/
+          if [ "${{ steps.preview.outcome }}" = "success" ] && [ -d preview/site ]; then
+            mkdir -p _site/vorschau
+            cp -r preview/site/. _site/vorschau/
+            echo "Vorschau aus $PREVIEW_BRANCH eingebunden."
+          fi
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
