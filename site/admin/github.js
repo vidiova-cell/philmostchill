@@ -70,6 +70,7 @@
 
     return {
       kind: 'github',
+      token, // für „Kennwort ändern“ (neu verschlüsseln)
 
       // Prüft Zugang: gibt den Benutzernamen zurück oder wirft einen Fehler
       async checkAccess() {

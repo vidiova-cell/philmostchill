@@ -274,7 +274,7 @@
       toast('Gespeichert! In etwa einer Minute ist alles live.');
       watchDeploy(sha);
     } catch (e) {
-      if (e.status === 401) { toast('Anmeldung abgelaufen – bitte neu anmelden.', true); logout(); return; }
+      if (e.status === 401) { logout('Der Zugang ist abgelaufen – bitte das Kennwort neu einrichten.'); return; }
       toast(e.message || 'Speichern hat nicht geklappt.', true);
     } finally {
       S.busy = false;
@@ -391,9 +391,10 @@
       <h3>Menü</h3>
       <a class="btn btn-block" href="${esc(SITE)}" target="_blank" rel="noopener">${ICON.open}Webseite ansehen</a>
       <button class="btn btn-block" data-reload>Neu laden</button>
+      ${DEMO ? '' : '<a class="btn btn-block" href="#/einrichten" data-close>Kennwort ändern</a>'}
       ${DEMO ? '' : '<button class="btn btn-block btn-danger" data-logout>Abmelden</button>'}
       <button class="btn btn-block btn-ghost" data-close>Schließen</button>`, (el) => {
-      el.querySelector('[data-close]').onclick = closeSheet;
+      el.querySelectorAll('[data-close]').forEach((b) => { b.addEventListener('click', closeSheet); });
       el.querySelector('[data-reload]').onclick = async () => {
         closeSheet();
         if (isDirty() && !(await confirmSheet({ title: 'Neu laden?', text: 'Nicht veröffentlichte Änderungen gehen verloren.', ok: 'Neu laden', danger: true }))) return;
@@ -563,58 +564,143 @@
     });
   }
 
-  function viewLogin(message) {
+  // ---------- Anmeldung per Kennwort ----------
+  // Der GitHub-Schlüssel liegt verschlüsselt in admin/zugang.json (siehe zugang.js)
+  async function fetchZugang() {
+    for (const url of ['zugang.json', RAW + 'admin/zugang.json']) {
+      try {
+        const r = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' });
+        if (r.ok) return await r.json();
+      } catch (e) { /* nächste Quelle probieren */ }
+    }
+    return null;
+  }
+
+  async function signIn(token) {
+    const s = PMCStore.createGitHubStore({ ...CFG, token });
+    await s.checkAccess();
+    try { localStorage.setItem(TOKEN_KEY, token); } catch (err) { /* privater Modus */ }
+    store = s;
+  }
+
+  async function viewLogin(message) {
     $bar.hidden = true;
+    $app.innerHTML = '<div class="screen login"><p>Einen Moment …</p></div>';
+    const zugang = await fetchZugang();
+    if (location.hash.replace(/^#/, '') === '/einrichten') return; // inzwischen weiternavigiert
+    const logo = '<img class="login-logo" src="../img/logo/pmc-logo.svg" alt="philmostchill">';
+    if (!zugang) {
+      $app.innerHTML = `<div class="screen login">${logo}<h1>Admin</h1>
+        <p>Für den Admin ist noch kein Kennwort eingerichtet.</p>
+        <a class="btn btn-primary btn-block" href="#/einrichten">Kennwort einrichten</a></div>`;
+      return;
+    }
     $app.innerHTML = `<div class="screen login">
-      <img class="login-logo" src="../img/logo/pmc-logo.svg" alt="philmostchill">
+      ${logo}
       <h1>Admin</h1>
-      <p>Melde dich einmal mit deinem GitHub-Schlüssel an. Danach bleibt dieses Gerät angemeldet.</p>
+      <p>Melde dich mit deinem Kennwort an.</p>
       ${message ? `<p style="color:var(--danger)">${esc(message)}</p>` : ''}
-      <form data-login>
-        <label class="field"><span>Schlüssel</span>
-          <input class="input" type="password" name="token" autocomplete="current-password" autocapitalize="off" spellcheck="false" placeholder="github_pat_…" required></label>
+      <form data-login autocomplete="on">
+        <!-- Benutzername nur für den iCloud-Schlüsselbund (Face ID) -->
+        <input class="visually-hidden" type="text" name="username" autocomplete="username" value="philmostchill" tabindex="-1" aria-hidden="true">
+        <label class="field"><span>Kennwort</span>
+          <input class="input" type="password" name="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" required></label>
         <button class="btn btn-primary btn-block" type="submit">Anmelden</button>
       </form>
-      <details>
-        <summary>Wie bekomme ich einen Schlüssel?</summary>
-        <ol>
-          <li>Auf github.com anmelden → Profilbild → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
-          <li>Name z. B. „PMC Admin“, Ablaufdatum wählen.</li>
-          <li><b>Repository access:</b> Only select repositories → <b>${esc(CFG.owner)}/${esc(CFG.repo)}</b>.</li>
-          <li><b>Permissions:</b> Contents = <b>Read and write</b>, Actions = <b>Read-only</b>.</li>
-          <li>Erzeugen, kopieren und hier einfügen. Tipp: zusätzlich im Passwort-Manager speichern.</li>
-        </ol>
-      </details>
+      <p class="hint-text" style="text-align:center">Tipp: Lass Safari das Kennwort sichern – dann reicht künftig Face ID.</p>
+      <p class="hint-text" style="text-align:center"><a href="#/einrichten">Kennwort einrichten oder ändern</a></p>
     </div>`;
-    $app.querySelector('[data-login]').onsubmit = async (e) => {
+    const form = $app.querySelector('[data-login]');
+    form.onsubmit = async (e) => {
       e.preventDefault();
-      const token = e.target.token.value.trim();
-      const btn = e.target.querySelector('button');
+      const btn = form.querySelector('button');
       btn.disabled = true; btn.textContent = 'Prüfe …';
       try {
-        const s = PMCStore.createGitHubStore({ ...CFG, token });
-        await s.checkAccess();
-        try { localStorage.setItem(TOKEN_KEY, token); } catch (err) { /* privater Modus */ }
-        store = s;
+        const token = await PMCZugang.decryptToken(zugang, form.password.value);
+        await signIn(token);
         loadContent();
       } catch (err) {
-        viewLogin(err.status === 401 ? 'Dieser Schlüssel ist ungültig oder abgelaufen.' : err.message);
+        if (err.wrongPassword) viewLogin('Das Kennwort stimmt nicht.');
+        else if (err.status === 401) viewLogin('Der hinterlegte Zugang ist abgelaufen – bitte das Kennwort neu einrichten.');
+        else viewLogin(err.message || 'Anmeldung hat nicht geklappt.');
       }
     };
   }
 
-  function logout() {
+  // Kennwort festlegen: GitHub-Schlüssel wird mit dem Kennwort verschlüsselt und als zugang.json veröffentlicht
+  function viewSetup() {
+    $bar.hidden = true;
+    const loggedIn = !!(store && store.kind === 'github' && store.token);
+    $app.innerHTML = `<div class="screen">
+      ${topbar('<h1>Kennwort einrichten</h1>', { back: '#/' })}
+      ${DEMO ? '<p class="demo-banner">Im Demo-Modus nicht verfügbar.</p>' : ''}
+      <p class="hint-text" style="font-size:14px">${loggedIn
+        ? 'Lege ein neues Kennwort für den Admin fest. Das alte gilt danach nicht mehr.'
+        : 'Hier legst du das Kennwort fest, mit dem sich Phil im Admin anmeldet. Dafür brauchst du einmalig einen GitHub-Schlüssel – Phil selbst sieht davon nichts.'}</p>
+      <form data-setup>
+        ${loggedIn ? '' : `
+        <h2 class="section">1 · GitHub-Schlüssel</h2>
+        <label class="field"><span>Schlüssel</span>
+          <input class="input" type="password" name="token" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…" required></label>
+        <details class="hint-text" style="font-size:14px">
+          <summary style="color:var(--gold);cursor:pointer">So bekommst du den Schlüssel</summary>
+          <ol style="padding-left:20px">
+            <li>github.com → Profilbild → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b></li>
+            <li>Name „PMC Admin“, Ablauf z. B. 1 Jahr</li>
+            <li><b>Repository access:</b> Only select repositories → <b>${esc(CFG.owner)}/${esc(CFG.repo)}</b></li>
+            <li><b>Permissions:</b> Contents = <b>Read and write</b>, Actions = <b>Read-only</b></li>
+            <li>Erzeugen, kopieren, hier einfügen</li>
+          </ol>
+        </details>`}
+        <h2 class="section">${loggedIn ? '' : '2 · '}Kennwort für Phil</h2>
+        <label class="field"><span>Neues Kennwort (mind. ${PMCZugang.MIN_LENGTH} Zeichen)</span>
+          <input class="input" type="text" name="password" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" minlength="${PMCZugang.MIN_LENGTH}" required></label>
+        <button class="btn btn-block" type="button" data-suggest>Sicheres Kennwort vorschlagen</button>
+        <p class="hint-text">Lange Kennwörter aus mehreren Wörtern sind sicher und trotzdem gut zu merken.</p>
+        <div class="spacer"></div>
+        <button class="btn btn-primary btn-block" type="submit" ${DEMO ? 'disabled' : ''}>Kennwort speichern</button>
+        <p class="hint-text">Das Kennwort ist ca. eine Minute nach dem Speichern aktiv. Gib es Phil am besten persönlich weiter, nicht per Messenger.</p>
+      </form>
+    </div>`;
+    const form = $app.querySelector('[data-setup]');
+    $app.querySelector('[data-suggest]').onclick = () => { form.password.value = PMCZugang.suggestPassword(); };
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const pw = form.password.value.trim();
+      if (pw.length < PMCZugang.MIN_LENGTH) { toast(`Das Kennwort braucht mindestens ${PMCZugang.MIN_LENGTH} Zeichen.`, true); return; }
+      const btn = form.querySelector('[type=submit]');
+      btn.disabled = true; btn.textContent = 'Speichere …';
+      try {
+        if (!loggedIn) await signIn(form.token.value.trim());
+        const file = await PMCZugang.encryptToken(store.token, pw);
+        await store.publish({
+          files: [{ path: 'site/admin/zugang.json', text: JSON.stringify(file, null, 2) + '\n' }],
+          deletes: [],
+          message: 'Admin: Kennwort für den Admin neu festgelegt',
+        });
+        toast('Kennwort gespeichert – in ca. einer Minute aktiv.');
+        location.hash = '#/';
+        if (!S.data) loadContent(); else render();
+      } catch (err) {
+        btn.disabled = false; btn.textContent = 'Kennwort speichern';
+        toast(err.status === 401 ? 'Dieser Schlüssel ist ungültig oder abgelaufen.' : (err.message || 'Speichern hat nicht geklappt.'), true);
+      }
+    };
+  }
+
+  function logout(message) {
     try { localStorage.removeItem(TOKEN_KEY); } catch (e) { /* egal */ }
     store = null; S.data = null;
-    location.hash = '#/';
-    viewLogin();
+    if (location.hash && location.hash !== '#/') history.replaceState(null, '', location.pathname + location.search);
+    viewLogin(message);
   }
 
   // ---------- Router ----------
   let lastRoute = '';
   function render() {
-    if (!S.data) return;
     const route = location.hash.replace(/^#/, '') || '/';
+    if (route === '/einrichten') { lastRoute = route; viewSetup(); return; }
+    if (!S.data) { if (!store) viewLogin(); return; }
     const keepScroll = route === lastRoute ? window.scrollY : 0;
     lastRoute = route;
     const m = route.match(/^\/kat\/(.+)$/);
@@ -636,7 +722,7 @@
       S.orig = snapshot();
       render();
     } catch (e) {
-      if (e.status === 401 || e.status === 403) { logout(); viewLogin('Bitte neu anmelden.'); return; }
+      if (e.status === 401 || e.status === 403) { logout('Bitte neu anmelden.'); return; }
       $app.innerHTML = `<div class="screen login"><p>Laden hat nicht geklappt: ${esc(e.message)}</p><button class="btn btn-primary" onclick="location.reload()">Nochmal versuchen</button></div>`;
     }
   }
@@ -669,7 +755,7 @@
     if (DEMO) { store = createDemoStore(); loadContent(); return; }
     let token = null;
     try { token = localStorage.getItem(TOKEN_KEY); } catch (e) { /* privater Modus */ }
-    if (!token) { viewLogin(); return; }
+    if (!token) { render(); return; } // Anmeldung oder Einrichten
     store = PMCStore.createGitHubStore({ ...CFG, token });
     loadContent();
   })();

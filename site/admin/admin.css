@@ -240,3 +240,5 @@ h2.section {
 .contact-row .input-url { grid-column: 1 / -1; }
 .contact-row + .contact-row { padding-top: 12px; border-top: 1px solid var(--line); }
 .demo-banner { margin: 10px 0 0; padding: 8px 12px; border-radius: 10px; background: rgba(127, 224, 165, 0.1); color: var(--ok); font-size: 12px; }
+
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
