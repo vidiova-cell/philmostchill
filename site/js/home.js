@@ -5,11 +5,27 @@
   const photos = window.PMC_PHOTOS || {};
   const universe = document.querySelector('.universe');
 
+  // Schriftzug unter dem Sternbild – Breite passend zu den PMC-Buchstaben
+  const wordmark = document.querySelector('.wordmark');
+  function placeWordmark(b) {
+    const width = b.right - b.left;
+    wordmark.style.left = b.left + 'px';
+    wordmark.style.top = (b.bottom + Math.max(14, b.scale * 70)) + 'px';
+    wordmark.style.width = width + 'px';
+    // Schriftgröße so wählen, dass der gesperrte Schriftzug genau die Breite füllt
+    wordmark.style.fontSize = '100px';
+    const natural = wordmark.firstElementChild.getBoundingClientRect().width + 62; // + ausgeglichene Sperrung
+    wordmark.style.fontSize = Math.max(9, (100 * width) / (natural - 62)).toFixed(2) + 'px';
+    wordmark.style.setProperty('--reveal', (b.revealAt / 1000).toFixed(2) + 's');
+  }
+  let lastBounds = null;
+
   const sky = window.PMCSky(document.getElementById('sky'), {
-    constellation: ['philmostchill'],
-    constellationNarrow: ['philmost', 'chill'],
+    logo: window.PMCLogo,
     parallaxVars: true,
+    onLayout: (b) => { lastBounds = b; placeWordmark(b); },
   });
+  document.fonts && document.fonts.ready.then(() => lastBounds && placeWordmark(lastBounds));
   window.PMCSky.bindWarpLinks(sky);
 
   // Kategorie-Sterne als echte Links (Tastatur & Screenreader-freundlich)

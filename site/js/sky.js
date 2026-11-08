@@ -77,7 +77,58 @@
       canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       buildStars();
-      if (opts.constellation) buildConstellation();
+      if (opts.logo) buildLogoConstellation();
+      else if (opts.constellation) buildConstellation();
+      if (cons && opts.onLayout) opts.onLayout(cons.bounds);
+    }
+
+    /*
+     * PMC-Logo als Sternbild: jede Ecke der Buchstaben wird ein Stern,
+     * die Kanten werden nacheinander eingezeichnet. Danach erscheint der
+     * goldene Vierzack-Stern wie im Logo.
+     */
+    function buildLogoConstellation() {
+      const L = opts.logo;
+      const rnd = mulberry32(2024);
+      const narrow = isNarrow(W, H);
+      const b = L.bounds;
+      const scale = Math.min((W * (narrow ? 0.84 : 0.52)) / b.w, (H * (narrow ? 0.34 : 0.5)) / b.h);
+      const cx = W / 2, cy = H * (narrow ? 0.43 : 0.46);
+      const ox = cx - (b.x + b.w / 2) * scale, oy = cy - (b.y + b.h / 2) * scale;
+      const map = (p) => ({ x: ox + p[0] * scale, y: oy + p[1] * scale });
+      unit = scale * 270;
+
+      const nodes = [], edges = [];
+      const STEP = 55;
+      let order = 0;
+      Object.values(L.letters).forEach((poly) => {
+        const ns = poly.map((p) => {
+          const q = map(p);
+          const n = { x: q.x, y: q.y, s: 0.5 + rnd() * 0.9, ph: rnd() * 6.28, tw: 0.5 + rnd() * 1.6, appear: Infinity, hover: 0 };
+          nodes.push(n);
+          return n;
+        });
+        ns.forEach((a, i) => {
+          const bN = ns[(i + 1) % ns.length];
+          const delay = 500 + order * STEP; order++;
+          edges.push({ a, b: bN, delay });
+          a.appear = Math.min(a.appear, delay);
+          bN.appear = Math.min(bN.appear, delay + 300);
+        });
+      });
+
+      const s = L.star;
+      const starAt = 500 + order * STEP + 250;
+      const letterBottom = oy + 845 * scale;
+      cons = {
+        nodes, edges,
+        star: { path: new Path2D(L.starPath()), x: ox, y: oy, scale, cx: ox + s.cx * scale, cy: oy + s.cy * scale, appear: starAt, color: L.gold },
+        bounds: {
+          top: oy + b.y * scale, bottom: letterBottom,
+          left: ox + 168 * scale, right: ox + 1062 * scale, // Breite der Buchstaben (für den Schriftzug)
+          baseline: oy + 750 * scale, scale, revealAt: starAt + 400,
+        },
+      };
     }
 
     function buildStars() {
@@ -219,7 +270,8 @@
       const k = clamp(unit / 170, 0.5, 1.25);
 
       ctx.lineCap = 'round';
-      ctx.strokeStyle = 'rgb(176,198,255)';
+      ctx.strokeStyle = opts.logo ? 'rgb(232,230,224)' : 'rgb(176,198,255)';
+      const nodeSprite = opts.logo ? sprites.white : sprites.blue;
       for (const e of cons.edges) {
         const p = REDUCED ? 1 : clamp((t - e.delay) / 450, 0, 1);
         if (p <= 0) continue;
@@ -227,8 +279,8 @@
         const bx = e.b.x + ox, by = e.b.y + oy;
         const q = easeOut(p);
         const hb = (e.a.hover + e.b.hover) / 2;
-        ctx.globalAlpha = (0.21 + hb * 0.5) * fade;
-        ctx.lineWidth = 1 + hb * 0.6;
+        ctx.globalAlpha = ((opts.logo ? 0.34 : 0.21) + hb * 0.5) * fade;
+        ctx.lineWidth = (opts.logo ? 1.3 : 1) + hb * 0.6;
         ctx.beginPath();
         ctx.moveTo(ax, ay);
         ctx.lineTo(ax + (bx - ax) * q, ay + (by - ay) * q);
@@ -247,11 +299,43 @@
         const a = p * tw * fade * (0.72 + n.hover * 0.28);
         const size = (9 + n.s * 10) * k * (1 + n.hover * 0.7 + flash);
         ctx.globalAlpha = a;
-        ctx.drawImage(sprites.blue, x - size / 2, y - size / 2, size, size);
+        ctx.drawImage(nodeSprite, x - size / 2, y - size / 2, size, size);
         ctx.globalAlpha = Math.min(1, a * 1.15);
         ctx.fillStyle = '#fff';
         ctx.beginPath(); ctx.arc(x, y, (0.55 + n.s * 0.6) * k, 0, Math.PI * 2); ctx.fill();
       }
+
+      if (cons.star) drawLogoStar(t, ox, oy, fade);
+    }
+
+    // Der goldene Vierzack-Stern aus dem Logo
+    function drawLogoStar(t, ox, oy, fade) {
+      const st = cons.star;
+      const p = REDUCED ? 1 : clamp((t - st.appear) / 900, 0, 1);
+      if (p <= 0) return;
+      const d = Math.hypot(st.cx + ox - mouse.px, st.cy + oy - mouse.py);
+      st.hover = (st.hover || 0) + ((Math.max(0, 1 - d / 220)) - (st.hover || 0)) * 0.08;
+      const pulse = REDUCED ? 1 : 1 + 0.025 * Math.sin(t * 0.0016);
+      const pop = REDUCED ? 1 : 0.6 + 0.4 * easeOut(p) + Math.max(0, 0.18 - Math.abs(p - 0.55)) * 0.9; // kurzes "Aufpoppen"
+      const sc = pulse * pop * (1 + st.hover * 0.06);
+      ctx.save();
+      ctx.globalAlpha = p * fade;
+      // um die eigene Mitte skalieren
+      ctx.translate(st.cx + ox, st.cy + oy);
+      ctx.scale(sc, sc);
+      ctx.translate(-st.cx, -st.cy);
+      ctx.translate(st.x, st.y);
+      ctx.scale(st.scale, st.scale);
+      // dunkler Rand, damit die Linien darunter "ausgeschnitten" wirken
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = '#050506';
+      ctx.stroke(st.path);
+      ctx.shadowColor = 'rgba(249,184,15,' + (0.55 + st.hover * 0.3) + ')';
+      ctx.shadowBlur = 28 + st.hover * 30;
+      ctx.fillStyle = st.color;
+      ctx.fill(st.path);
+      ctx.restore();
     }
 
     function drawShooting(now) {
