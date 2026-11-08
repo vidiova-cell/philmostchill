@@ -11,3 +11,6 @@ fotos/**/*.tiff
 .vercel
 .DS_Store
 Thumbs.db
+
+# lokaler Import-Stand der Foto-Pipeline
+fotos/.import-stand.json

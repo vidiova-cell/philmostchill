@@ -1,4 +1,4 @@
-/* Automatisch erzeugt von `npm run fotos` – nicht von Hand bearbeiten. */
+/* Fotos je Kategorie – gepflegt über /admin/ und `npm run fotos`. Format: JSON. */
 window.PMC_PHOTOS = {
   "menschen": [
     {
