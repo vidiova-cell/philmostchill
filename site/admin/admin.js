@@ -79,7 +79,10 @@
   function snapshot() { return { data: JSON.stringify(S.data), photos: JSON.stringify(S.photos) }; }
   function dataChanged() { return JSON.stringify(S.data) !== S.orig.data; }
   function photosChanged() { return JSON.stringify(S.photos) !== S.orig.photos; }
-  function isDirty() { return dataChanged() || photosChanged() || S.uploads.size > 0 || S.deletes.size > 0; }
+  function isDirty() {
+    if (!S.data) return false; // Anmeldung / Laden: nichts zu verlieren
+    return dataChanged() || photosChanged() || S.uploads.size > 0 || S.deletes.size > 0;
+  }
   function logChange(key, text, delta = 0) {
     const e = S.log.get(key) || { text, n: 0 };
     e.n += delta;
