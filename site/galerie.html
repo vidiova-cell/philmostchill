@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Galerie · philmostchill</title>
+  <meta name="description" content="philmostchill – Fotografie.">
+  <meta name="theme-color" content="#04050c">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/instrument-serif-latin-400-italic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-gallery">
+  <canvas id="sky" class="sky" aria-hidden="true"></canvas>
+  <div class="nebula" aria-hidden="true"></div>
+
+  <header class="g-header">
+    <a class="g-back" href="index.html" data-warp="center"><span class="g-back-dot"></span>Universum</a>
+    <a class="g-wordmark" href="index.html" data-warp="center">philmostchill</a>
+  </header>
+
+  <main class="g-main">
+    <section class="g-hero">
+      <p class="g-kicker"><span class="g-kicker-no"></span><span class="g-kicker-sep"></span><span class="g-kicker-coords"></span></p>
+      <h1 class="g-title"><span class="g-title-text"></span><span class="g-title-star" aria-hidden="true"></span></h1>
+      <p class="g-desc"></p>
+    </section>
+
+    <div class="g-grid"></div>
+
+    <nav class="g-other" aria-label="Weitere Kategorien">
+      <h2>Weitere Sterne</h2>
+      <ul></ul>
+    </nav>
+  </main>
+
+  <footer class="g-footer">
+    <span>© <span class="g-year"></span> philmostchill</span>
+    <a href="index.html#ueber">Über Phil</a>
+  </footer>
+
+  <dialog class="lightbox" aria-label="Bildansicht">
+    <div class="lb-stage"><img class="lb-img" alt=""></div>
+    <div class="lb-bar">
+      <span class="lb-title"></span>
+      <span class="lb-count"></span>
+    </div>
+    <button class="lb-btn lb-prev" type="button" aria-label="Vorheriges Foto"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="lb-btn lb-next" type="button" aria-label="Nächstes Foto"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    <button class="lb-btn lb-close" type="button" aria-label="Schließen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </dialog>
+
+  <div class="veil" aria-hidden="true"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/photos.js"></script>
+  <script src="js/sky.js"></script>
+  <script src="js/gallery.js"></script>
+</body>
+</html>

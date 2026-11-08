@@ -1,0 +1,16 @@
+{
+  "name": "philmostchill",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fotografie-Portfolio von philmostchill – ein Universum aus Sternen.",
+  "type": "module",
+  "scripts": {
+    "fotos": "node tools/fotos.mjs",
+    "dev": "node tools/serve.mjs"
+  },
+  "devDependencies": {
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@fontsource/space-mono": "^5.3.0",
+    "sharp": "^0.35.5"
+  }
+}

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>philmostchill · Fotografie</title>
+  <meta name="description" content="philmostchill – Fotografie. Ein Universum aus Bildern: Natur, Stadt, Nacht, Menschen und Unterwegs.">
+  <meta name="theme-color" content="#04050c">
+  <meta property="og:title" content="philmostchill · Fotografie">
+  <meta property="og:description" content="Folge einem leuchtenden Stern.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/instrument-serif-latin-400-italic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-home">
+  <canvas id="sky" class="sky" aria-hidden="true"></canvas>
+  <div class="nebula" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <span class="topbar-label">Fotografie</span>
+    <button class="topbar-link" type="button" data-open-about>Über Phil</button>
+  </header>
+
+  <main>
+    <h1 class="visually-hidden">philmostchill – Fotografie</h1>
+    <nav class="universe" aria-label="Kategorien"></nav>
+  </main>
+
+  <p class="hint">Folge einem leuchtenden Stern</p>
+
+  <dialog class="about" aria-labelledby="about-title">
+    <div class="about-inner">
+      <button class="about-close" type="button" aria-label="Schließen" data-close>&times;</button>
+      <svg class="about-libra" viewBox="0 0 100 160" aria-hidden="true"></svg>
+      <p class="about-kicker">Sternzeichen Waage · ♎︎</p>
+      <h2 id="about-title" class="about-title"></h2>
+      <div class="about-text"></div>
+      <ul class="about-contact"></ul>
+    </div>
+  </dialog>
+
+  <div class="veil" aria-hidden="true"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/photos.js"></script>
+  <script src="js/sky.js"></script>
+  <script src="js/libra.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>

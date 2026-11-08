@@ -1,0 +1,13 @@
+node_modules/
+# Originalfotos (groß, evtl. mit GPS-Daten) bleiben lokal.
+# Veröffentlicht werden nur die bereinigten Versionen in site/img/fotos/.
+fotos/**/*.jpg
+fotos/**/*.jpeg
+fotos/**/*.png
+fotos/**/*.heic
+fotos/**/*.webp
+fotos/**/*.tif
+fotos/**/*.tiff
+.vercel
+.DS_Store
+Thumbs.db

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verloren im All · philmostchill</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .lost { position: relative; z-index: 10; min-height: 100dvh; display: grid; place-content: center; text-align: center; padding: 24px; }
+    .lost h1 { margin: 0; font-weight: 400; font-style: italic; font-size: clamp(56px, 12vw, 120px); line-height: 1; }
+    .lost p { color: var(--ink-dim); font-size: 21px; }
+    .lost a { font-family: var(--mono); font-size: 12px; letter-spacing: .2em; text-transform: uppercase; text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  </style>
+</head>
+<body class="page-gallery">
+  <canvas id="sky" class="sky" aria-hidden="true"></canvas>
+  <main class="lost">
+    <h1>404</h1>
+    <p>Dieser Stern existiert (noch) nicht.</p>
+    <p><a href="/">Zurück ins Universum</a></p>
+  </main>
+  <div class="veil" aria-hidden="true"></div>
+  <script src="/js/sky.js"></script>
+  <script>PMCSky(document.getElementById('sky'), { density: 0.8 });</script>
+</body>
+</html>
