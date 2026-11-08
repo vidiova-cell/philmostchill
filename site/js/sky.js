@@ -327,14 +327,27 @@
       ctx.translate(-st.cx, -st.cy);
       ctx.translate(st.x, st.y);
       ctx.scale(st.scale, st.scale);
-      // dunkler Rand, damit die Linien darunter "ausgeschnitten" wirken
-      ctx.lineJoin = 'round';
-      ctx.lineWidth = 14;
-      ctx.strokeStyle = '#050506';
-      ctx.stroke(st.path);
-      ctx.shadowColor = 'rgba(249,184,15,' + (0.55 + st.hover * 0.3) + ')';
-      ctx.shadowBlur = 28 + st.hover * 30;
-      ctx.fillStyle = st.color;
+      // Leuchten statt Farbfläche: additiv mischen, damit der Stern wie Licht wirkt
+      const L = opts.logo.star;
+      const shimmer = REDUCED ? 0 : 0.5 + 0.5 * Math.sin(t * 0.0011);
+      ctx.globalCompositeOperation = 'lighter';
+      // weicher Lichthof
+      const R = 330;
+      const halo = ctx.createRadialGradient(L.cx, L.cy, 0, L.cx, L.cy, R);
+      halo.addColorStop(0, 'rgba(255,214,150,' + (0.16 + st.hover * 0.08 + shimmer * 0.03) + ')');
+      halo.addColorStop(0.35, 'rgba(255,196,110,0.05)');
+      halo.addColorStop(1, 'rgba(255,196,110,0)');
+      ctx.fillStyle = halo;
+      ctx.fillRect(L.cx - R, L.cy - R, R * 2, R * 2);
+      // Sternkörper: innen warmes Weiß, nach außen blasses Gold
+      const body = ctx.createRadialGradient(L.cx, L.cy, 0, L.cx, L.cy, 250);
+      body.addColorStop(0, 'rgba(255,252,240,0.95)');
+      body.addColorStop(0.14, 'rgba(255,232,180,0.85)');
+      body.addColorStop(0.45, 'rgba(245,200,110,0.5)');
+      body.addColorStop(1, 'rgba(235,180,80,0.18)');
+      ctx.shadowColor = 'rgba(255,200,110,' + (0.5 + st.hover * 0.25) + ')';
+      ctx.shadowBlur = 36 + shimmer * 10 + st.hover * 30;
+      ctx.fillStyle = body;
       ctx.fill(st.path);
       ctx.restore();
     }
