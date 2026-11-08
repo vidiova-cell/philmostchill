@@ -68,7 +68,8 @@
     const shooting = [];
     let nextShoot = performance.now() + 3000;
     let warp = null;
-    const t0 = performance.now();
+    // Bei skipIntro ist der Aufbau (Linien, goldener Stern) sofort fertig
+    const t0 = performance.now() - (opts.skipIntro ? 60000 : 0);
     let lastPx = null;
 
     function resize() {

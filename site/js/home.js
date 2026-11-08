@@ -20,9 +20,15 @@
   }
   let lastBounds = null;
 
+  // Intro (Sternbild-Aufbau) nur beim ersten Besuch pro Browser-Sitzung.
+  // Die Klasse "no-intro" setzt schon ein kleines Skript im <head>.
+  const skipIntro = document.documentElement.classList.contains('no-intro');
+  try { sessionStorage.setItem('pmc-intro-gesehen', '1'); } catch (e) { /* privater Modus o. ä. */ }
+
   const sky = window.PMCSky(document.getElementById('sky'), {
     logo: window.PMCLogo,
     parallaxVars: true,
+    skipIntro,
     onLayout: (b) => { lastBounds = b; placeWordmark(b); },
   });
   document.fonts && document.fonts.ready.then(() => lastBounds && placeWordmark(lastBounds));
@@ -79,8 +85,10 @@
   place();
   window.addEventListener('resize', place);
 
-  // Sterne nacheinander "aufleuchten" lassen
-  requestAnimationFrame(() => document.body.classList.add('is-ready'));
+  // Sterne nacheinander "aufleuchten" lassen – sofort, ohne auf den nächsten
+  // Bildaufbau zu warten (sonst startet die Abfolge in Hintergrund-Tabs zu spät)
+  void universe.offsetWidth; // Ausgangszustand (unsichtbar) festschreiben
+  document.body.classList.add('is-ready');
 
   // Über-Dialog
   const dialog = document.querySelector('.about');

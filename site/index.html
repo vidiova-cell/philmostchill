@@ -14,6 +14,10 @@
   <link rel="preload" href="fonts/chakra-petch-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/montserrat-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
+  <script>
+    // Wer in dieser Sitzung schon hier war, sieht das Universum sofort fertig
+    try { if (sessionStorage.getItem('pmc-intro-gesehen')) document.documentElement.classList.add('no-intro'); } catch (e) {}
+  </script>
 </head>
 <body class="page-home">
   <canvas id="sky" class="sky" aria-hidden="true"></canvas>
