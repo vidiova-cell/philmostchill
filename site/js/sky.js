@@ -331,22 +331,27 @@
       const L = opts.logo.star;
       const shimmer = REDUCED ? 0 : 0.5 + 0.5 * Math.sin(t * 0.0011);
       ctx.globalCompositeOperation = 'lighter';
+      // Grundzustand: dezentes Glimmen. In Mausnähe (hover) leuchtet er auf.
+      const h = st.hover;
+      const k = 0.55 + h * 0.45; // Gesamtintensität
       // weicher Lichthof
-      const R = 330;
+      const R = 300;
       const halo = ctx.createRadialGradient(L.cx, L.cy, 0, L.cx, L.cy, R);
-      halo.addColorStop(0, 'rgba(255,214,150,' + (0.16 + st.hover * 0.08 + shimmer * 0.03) + ')');
-      halo.addColorStop(0.35, 'rgba(255,196,110,0.05)');
+      halo.addColorStop(0, 'rgba(255,214,150,' + ((0.07 + shimmer * 0.02) * k + h * 0.08) + ')');
+      halo.addColorStop(0.35, 'rgba(255,196,110,' + (0.025 * k) + ')');
       halo.addColorStop(1, 'rgba(255,196,110,0)');
       ctx.fillStyle = halo;
       ctx.fillRect(L.cx - R, L.cy - R, R * 2, R * 2);
       // Sternkörper: innen warmes Weiß, nach außen blasses Gold
       const body = ctx.createRadialGradient(L.cx, L.cy, 0, L.cx, L.cy, 250);
-      body.addColorStop(0, 'rgba(255,252,240,0.95)');
-      body.addColorStop(0.14, 'rgba(255,232,180,0.85)');
-      body.addColorStop(0.45, 'rgba(245,200,110,0.5)');
-      body.addColorStop(1, 'rgba(235,180,80,0.18)');
-      ctx.shadowColor = 'rgba(255,200,110,' + (0.5 + st.hover * 0.25) + ')';
-      ctx.shadowBlur = 36 + shimmer * 10 + st.hover * 30;
+      // heller Kern bleibt auch gedämpft – so wirkt er wie Licht, nicht wie Farbe
+      body.addColorStop(0, 'rgba(255,252,242,' + (0.88 + h * 0.1) + ')');
+      body.addColorStop(0.08, 'rgba(255,238,200,' + (0.62 + h * 0.2) + ')');
+      body.addColorStop(0.2, 'rgba(255,226,170,' + (0.5 * k) + ')');
+      body.addColorStop(0.45, 'rgba(245,200,110,' + (0.4 * k) + ')');
+      body.addColorStop(1, 'rgba(235,180,80,' + (0.12 * k) + ')');
+      ctx.shadowColor = 'rgba(255,200,110,' + (0.28 + h * 0.4) + ')';
+      ctx.shadowBlur = 22 + shimmer * 6 + h * 40;
       ctx.fillStyle = body;
       ctx.fill(st.path);
       ctx.restore();
