@@ -234,9 +234,18 @@ img { max-width: 100%; display: block; }
   white-space: nowrap;
   transform: translate(-50%, 6px);
   opacity: 0;
-  transition: opacity 0.45s var(--ease), transform 0.45s var(--ease);
+  transition: opacity 1.4s ease-out, transform 1.4s var(--ease);
   pointer-events: none;
 }
+/* Beschriftungen sind immer sichtbar (gedämpft) und erscheinen zusammen mit ihrem Stern */
+.is-ready .cstar-label, .is-ready .libra-label { opacity: 0.72; transform: translate(-50%, 0); }
+.is-ready .libra .libra-label { opacity: 0.5; }
+.cstar:nth-child(1) .cstar-label { transition-delay: 2.3s; }
+.cstar:nth-child(2) .cstar-label { transition-delay: 2.65s; }
+.cstar:nth-child(3) .cstar-label { transition-delay: 3.0s; }
+.cstar:nth-child(4) .cstar-label { transition-delay: 3.35s; }
+.cstar:nth-child(5) .cstar-label { transition-delay: 3.7s; }
+.libra .libra-label { transition-delay: 4.4s; }
 .cstar-name {
   font-style: italic;
   font-size: 26px;
@@ -252,20 +261,23 @@ img { max-width: 100%; display: block; }
   opacity: 0.85;
 }
 
-.cstar:hover .cstar-label, .cstar:focus-visible .cstar-label,
-.libra:hover .libra-label, .libra:focus-visible .libra-label {
+.is-ready .cstar:hover .cstar-label, .is-ready .cstar:focus-visible .cstar-label,
+.is-ready .libra:hover .libra-label, .is-ready .libra:focus-visible .libra-label {
   opacity: 1;
-  transform: translate(-50%, 0);
+  transform: translate(-50%, -3px);
+  transition-duration: 0.45s;
+  transition-delay: 0s;
 }
 .cstar:hover .cstar-core, .cstar:focus-visible .cstar-core { transform: scale(1.6); }
 .cstar:hover .cstar-flare::before, .cstar:focus-visible .cstar-flare::before { transform: scaleX(1.7); opacity: 1; }
 .cstar:hover .cstar-flare::after, .cstar:focus-visible .cstar-flare::after { transform: rotate(90deg) scaleX(1.25); opacity: 1; }
 .cstar:focus-visible .cstar-ring { animation: none; opacity: 0.7; transform: scale(2.2); }
 
-/* Touch-Geräte: Namen immer zeigen, da es kein Hover gibt */
+/* Touch-Geräte: kein Hover, daher Namen etwas kräftiger */
 @media (hover: none) {
   .libra { width: 64px; height: 100px; margin: -50px 0 0 -32px; }
-  .cstar-label, .libra-label { opacity: 0.9; transform: translate(-50%, 0); }
+  .is-ready .cstar-label { opacity: 0.9; }
+  .is-ready .libra .libra-label { opacity: 0.7; }
   .cstar-name { font-size: 21px; }
   .hint { display: none; }
 }
@@ -293,7 +305,6 @@ img { max-width: 100%; display: block; }
 .libra-glow { fill: rgba(200, 185, 255, 0.2); transition: fill 0.5s; animation: breathe 5s ease-in-out infinite; }
 @keyframes breathe { 50% { fill: rgba(200, 185, 255, 0.08); } }
 .libra .libra-lines line { opacity: 0.4; }
-.libra .libra-label { opacity: 0.45; transform: translate(-50%, 0); }
 .libra:hover .libra-lines line, .libra:focus-visible .libra-lines line { opacity: 0.85; stroke-width: 1.1; }
 .libra:hover .libra-glow, .libra:focus-visible .libra-glow { fill: rgba(220, 205, 255, 0.32); }
 .libra-label { top: calc(100% + 2px); }
