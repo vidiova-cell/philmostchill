@@ -1,2 +1,4 @@
+# Zwischenstand: noch nicht in Suchmaschinen aufnehmen.
+# Zum Livegang ersetzen durch:  User-agent: *  /  Allow: /
 User-agent: *
-Allow: /
+Disallow: /
